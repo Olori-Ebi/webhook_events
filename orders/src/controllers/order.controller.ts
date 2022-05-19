@@ -107,6 +107,8 @@ export default class OrdersController {
 
   static async AppEventTrigger(req: Request, res: Response) {
     const { payload } = req.body;
+    console.log('reached app event trigger',payload);
+    
 
     OrdersController.SubscribeEvents(payload);
 

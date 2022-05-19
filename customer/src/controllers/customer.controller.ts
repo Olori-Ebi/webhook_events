@@ -155,7 +155,6 @@ export default class CustomerController {
         }else{
             customer?.cart?.push({product, unit: quantity});
         }
-        console.log(customer);
         await customer?.save();
       } catch (error: any) {
         

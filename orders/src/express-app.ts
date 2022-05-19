@@ -3,12 +3,12 @@ import orderRouter from "./routes/order.route";
 import appEvents from './app-events'
 
 export default async(app: Application) => {
-    app.use(express.json());
     app.use(express.urlencoded({ extended: true}))
     
     app.use(express.json());
-    app.use('/', orderRouter)
     appEvents(app)
+    app.use('/', orderRouter)
+
 
     app.use('*', (_req, res: Response) => {
         res.status(404).json({

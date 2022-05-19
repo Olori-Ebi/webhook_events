@@ -75,7 +75,7 @@ export default class ProductController {
 
     ProductController.SubscribeEvents(payload);
 
-    console.log("===============  Customer Service Received Event ====== ");
+    console.log("===============  Product Service Received Event ====== ");
     return res.status(200).json(payload);
   }
 
@@ -133,7 +133,7 @@ export default class ProductController {
         // console.log(result);
         
         await PublishCustomerEvents(result)
-        // await PublishOrderEvents(result)
+        await PublishOrderEvents(result)
         
         const response = {
           product: result.data.product,

@@ -19,7 +19,7 @@ const StartServer = async () => {
 
   app
     .listen(PORT, () => {
-      console.log(`Listening to port ${PORT}`);
+      console.log(`Order Listening to port ${PORT}`);
     })
     .on("error", (err) => {
       console.log(err);

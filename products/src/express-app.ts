@@ -3,9 +3,7 @@ import productRouter from "./routes/product.route";
 import appEvents from './app-events'
 
 export default async(app: Application) => {
-    app.use(express.json());
     app.use(express.urlencoded({ extended: true}))
-    
     app.use(express.json());
     appEvents(app)
     app.use('/', productRouter)
