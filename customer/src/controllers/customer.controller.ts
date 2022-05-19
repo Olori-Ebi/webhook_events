@@ -44,8 +44,13 @@ export default class CustomerController {
         );
       }
       return errorResponse(res, "Invalid credentials", 400, true);
-    } catch (error:any) {
-      return errorResponse(res, `Error logging in. ${error.message}`, 400, true);
+    } catch (error: any) {
+      return errorResponse(
+        res,
+        `Error logging in. ${error.message}`,
+        400,
+        true
+      );
     }
   }
 
@@ -53,17 +58,22 @@ export default class CustomerController {
     try {
       const { id } = req.user;
       const { street, postalCode, city, country } = req.body;
-  
+
       const customer = await Customer.findById(id);
-  
+
       if (!customer) return errorResponse(res, "Customer not found", 404, true);
       const address = new Address({ street, postalCode, city, country });
       customer.address.push(address);
       await customer.save();
       await address.save();
       return successResponse(res, customer, "Address added successfully", 200);
-    } catch (error:any) {
-      return errorResponse(res, `Error adding address. ${error.message}`, 400, true);
+    } catch (error: any) {
+      return errorResponse(
+        res,
+        `Error adding address. ${error.message}`,
+        400,
+        true
+      );
     }
   }
 
@@ -71,24 +81,42 @@ export default class CustomerController {
     try {
       const { id } = req.user;
       const customer = await Customer.findById(id)
-      .populate("address")
-      .populate("wishlist")
-      // .populate("orders")
-      // .populate("cart.product");
+        .populate("address")
+        .populate("wishlist");
 
-      return successResponse(res, customer, "Profile fetched successfully", 200);
+      return successResponse(
+        res,
+        customer,
+        "Profile fetched successfully",
+        200
+      );
     } catch (error: any) {
-      return errorResponse(res, `Error fetching profile. ${error.message}`, 400, true);
+      return errorResponse(
+        res,
+        `Error fetching profile. ${error.message}`,
+        400,
+        true
+      );
     }
   }
 
   static async getWishlist(req: Request, res: Response) {
     try {
       const { id } = req.user;
-      const customer = await Customer.findById(id).populate('wishlist');
-      return successResponse(res, customer && customer.wishlist, "Wishlist fetched successfully", 200);
+      const customer = await Customer.findById(id).populate("wishlist");
+      return successResponse(
+        res,
+        customer && customer.wishlist,
+        "Wishlist fetched successfully",
+        200
+      );
     } catch (error: any) {
-      return errorResponse(res, `Error fetching wishlist. ${error.message}`, 400, true);
+      return errorResponse(
+        res,
+        `Error fetching wishlist. ${error.message}`,
+        400,
+        true
+      );
     }
   }
 
@@ -96,85 +124,82 @@ export default class CustomerController {
     try {
       const { _id, name, desc, price, available, banner } = data;
       const customer = await Customer.findById(userId);
-      const product = { _id, name, description: desc, price, available, banner }
-      
-      if(customer && customer.wishlist.length > 0) {
-          let isExist = false;
-          const productIndex = customer.wishlist.findIndex(list => list._id == product._id);
-          if(productIndex > -1) {
-            customer.wishlist.splice(productIndex, 1);
-            isExist = true;
-          } else if(!isExist) {
-            customer?.wishlist?.push(product);
-          }
+      const product = {
+        _id,
+        name,
+        description: desc,
+        price,
+        available,
+        banner,
+      };
+
+      if (customer && customer.wishlist.length > 0) {
+        let isExist = false;
+        const productIndex = customer.wishlist.findIndex(
+          (list) => list._id == product._id
+        );
+        if (productIndex > -1) {
+          customer.wishlist.splice(productIndex, 1);
+          isExist = true;
+        } else if (!isExist) {
+          customer?.wishlist?.push(product);
+        }
       } else {
         customer?.wishlist?.push(product);
       }
-      
+
       await customer?.save();
-      console.log(customer);
-      
-      // return successResponse(response, customer, "Product added to wishlist successfully", 200);
     } catch (error: any) {
       console.log(error);
-      
-      // return errorResponse(
-      //   response,
-      //   `Error adding product to wishlist: ${error.message}`,
-      //   400,
-      //   true
-      // );
     }
   }
 
-  static async addProductToCart(userId: string, data: any, quantity: number) {
-    
-    try {
-        const { _id, name, price, banner, isRemove } = data;
-        const customer = await Customer.findById(userId);
-        console.log(customer);
-        
-        const product = { _id, name, price, banner }
-        
-          if(customer && customer.cart.length > 0){
-            let isExist = false;
-             customer.cart.map(item => {
-                if(item.product._id.toString() === product._id.toString()){
-                    if(isRemove){
-                      customer && customer.cart.splice(customer.cart.indexOf(item), 1);
-                    } else {
-                        item.unit = quantity;
-                    }
-                    isExist = true;
-                }
-            });
+  static async manageOrder(userId: string, order: any) {
+    console.log(userId, order);
 
-            if(!isExist){
-                customer?.cart?.push({product, unit: quantity});
-            } 
-        }else{
-            customer?.cart?.push({product, unit: quantity});
-        }
-        await customer?.save();
-      } catch (error: any) {
-        
-      }
+    try {
+      const customer = await Customer.findById(userId);
+      const data = {
+        _id: order.orderId,
+        amount: order.amount,
+      };
+      customer?.orders?.push(data);
+      await customer?.save();
+    } catch (err) {}
   }
 
-  async ManageOrder(customerId: string, order: any) {
-    // try {
-    //   const orderResult = await this.repository.AddOrderToProfile(
-    //     customerId,
-    //     order
-    //   );
-    //   return FormateData(orderResult);
-    // } catch (err) {
-    //   throw new APIError("Data Not found", err);
-    // }
+  static async addProductToCart(userId: string, data: any, quantity: number) {
+    try {
+      const { _id, name, price, banner, isRemove } = data;
+      const customer = await Customer.findById(userId);
+      const product = { _id, name, price, banner };
+
+      if (customer && customer.cart.length > 0) {
+        let isExist = false;
+        customer.cart.map((item) => {
+          if (item.product._id.toString() === product._id.toString()) {
+            if (isRemove) {
+              customer && customer.cart.splice(customer.cart.indexOf(item), 1);
+            } else {
+              item.unit = quantity;
+            }
+            isExist = true;
+          }
+        });
+
+        if (!isExist) {
+          customer?.cart?.push({ product, unit: quantity });
+        }
+      } else {
+        customer?.cart?.push({ product, unit: quantity });
+      }
+      await customer?.save();
+    } catch (error: any) {}
   }
 
   static async AppEventTrigger(req: Request, res: Response) {
     const { payload } = req.body;
+    console.log("Here again o. Thank God", payload);
 
     CustomerController.SubscribeEvents(payload);
 
@@ -189,22 +214,23 @@ export default class CustomerController {
     switch (event) {
       case "ADD_TO_WISHLIST":
       case "REMOVE_FROM_WISHLIST":
-        
         CustomerController.addProductToWishlist(userId, product);
         break;
       case "ADD_TO_CART":
-        console.log('herreeee');
-        
+        console.log("herreeee");
+
         CustomerController.addProductToCart(userId, product, quantity);
         break;
       // case "REMOVE_FROM_CART":
       //   this.ManageCart(userId, product, qty, true);
       //   break;
-      // case "CREATE_ORDER":
-      //   CustomerController.ManageOrder(userId, order);
-      //   break;
+      case "CREATE_ORDER":
+        console.log("we are here again");
+
+        CustomerController.manageOrder(userId, order);
+        break;
       case "TESTING":
-        console.log("WOEKING")
+        console.log("WOEKING");
         break;
       default:
         break;

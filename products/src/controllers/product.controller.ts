@@ -2,7 +2,7 @@ import { Request, response, Response } from "express";
 import { Product } from "../database/model/Product";
 import errorResponse from "../utils/errorHandler";
 import successResponse from "../utils/response";
-import { PublishCustomerEvents, PublishOrderEvents } from '../utils/index'
+import { PublishCustomerEvents, PublishOrderEvents } from "../utils/index";
 
 export default class ProductController {
   static async createProduct(req: Request, res: Response) {
@@ -85,21 +85,8 @@ export default class ProductController {
     const { userId, product, order, qty } = data;
 
     switch (event) {
-      // case "ADD_TO_WISHLIST":
-      // case "REMOVE_FROM_WISHLIST":
-      //   this.AddToWishlist(userId, product);
-      //   break;
-      // case "ADD_TO_CART":
-      //   this.ManageCart(userId, product, qty, false);
-      //   break;
-      // case "REMOVE_FROM_CART":
-      //   this.ManageCart(userId, product, qty, true);
-      //   break;
-      // case "CREATE_ORDER":
-      //   this.ManageOrder(userId, order);
-      //   break;
       case "TESTING":
-        console.log("WOEKING")
+        console.log("WOEKING");
         break;
       default:
         break;
@@ -110,9 +97,18 @@ export default class ProductController {
     try {
       const { id } = req.user;
       const { productId } = req.body;
-      const result = await ProductController.GetProductPayload(id, {productId}, 'ADD_TO_WISHLIST') as any
-      await PublishCustomerEvents(result)
-      return successResponse(res, result.data.data, "Product added to wishlist successfully", 200);
+      const result = (await ProductController.GetProductPayload(
+        id,
+        { productId },
+        "ADD_TO_WISHLIST"
+      )) as any;
+      await PublishCustomerEvents(result);
+      return successResponse(
+        res,
+        result.data.data,
+        "Product added to wishlist successfully",
+        200
+      );
     } catch (error: any) {
       return errorResponse(
         res,
@@ -125,43 +121,48 @@ export default class ProductController {
 
   static async addProductToCart(req: Request, res: Response) {
     try {
-        const { id } = req.user;
-        const { productId, quantity, isRemove } = req.body;
-        // console.log(quantity);
-        
-        const result = await ProductController.GetProductPayload(id, {productId, quantity, isRemove}, 'ADD_TO_CART') as any
-        // console.log(result);
-        
-        await PublishCustomerEvents(result)
-        await PublishOrderEvents(result)
-        
-        const response = {
-          product: result.data.product,
-          unit: result.data.quantity
-        }
-        return successResponse(res, response, "Product added to cart successfully", 200);
-      } catch (error: any) {
-        return errorResponse(
-          res,
-          `Error adding product to cart: ${error.message}`,
-          400,
-          true
-        );
-      }
+      const { id } = req.user;
+      const { productId, quantity, isRemove } = req.body;
+
+      const result = (await ProductController.GetProductPayload(
+        id,
+        { productId, quantity, isRemove },
+        "ADD_TO_CART"
+      )) as any;
+
+      await PublishCustomerEvents(result);
+      await PublishOrderEvents(result);
+
+      const response = {
+        product: result.data.product,
+        unit: result.data.quantity,
+      };
+      return successResponse(
+        res,
+        response,
+        "Product added to cart successfully",
+        200
+      );
+    } catch (error: any) {
+      return errorResponse(
+        res,
+        `Error adding product to cart: ${error.message}`,
+        400,
+        true
+      );
+    }
   }
 
   static async GetProductPayload(userId: string, data: any, event: string) {
-    const { productId, quantity, isRemove } = data
+    const { productId, quantity, isRemove } = data;
     const product = await Product.findById(productId);
     if (product) {
       const payload = {
         event,
         data: { userId, quantity, product, isRemove },
-      }
+      };
 
       return payload;
-    } else {
-      return errorResponse(response, "Sorry. Product not found", 404, true);
     }
   }
 }
