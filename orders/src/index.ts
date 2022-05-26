@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import App from "./express-app";
 import { PORT } from "./config";
 import dbConnection from "./database/dbConnection";
+import rabbit from "./database/rabbit";
 
 dotenv.config();
 
@@ -26,5 +27,7 @@ const StartServer = async () => {
       process.exit(1);
     });
 };
+
+
 
 StartServer();

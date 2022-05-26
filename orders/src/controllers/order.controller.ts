@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { v4 } from "uuid";
 import { Order } from "../database/model/Order";
 import { Cart } from "../database/model/Cart";
-import { PublishCustomerEvents } from "../../../products/src/utils";
+import rabbit from "../database/rabbit";
+// import { PublishCustomerEvents } from "../../../products/src/utils";
 
 export default class OrdersController {
   static async addProductToCart(userId: string, data: any, quantity: number) {
@@ -74,7 +75,17 @@ export default class OrdersController {
       )) as any;
       console.log("result", result);
 
-      await PublishCustomerEvents(result);
+      // await PublishCustomerEvents(result);
+
+      rabbit(function (conn: any) {
+        conn.createChannel(function (err:any, ch:any) {
+            if (err) {
+                console.log(err);
+            }
+            ch.assertQueue('PUBLISH_CUSTOMER', { durable: true });
+            ch.sendToQueue('PUBLISH_CUSTOMER', Buffer.from(JSON.stringify(result)));
+        });
+    });
 
       cart.items = [];
       const orderResult = await order.save();
@@ -133,3 +144,21 @@ export default class OrdersController {
     }
   }
 }
+
+
+rabbit(function (conn: any) {
+  conn.createChannel(function (err:any, ch:any) {
+      let q = "PUBLISH_ORDER";
+      ch.assertQueue(q, { durable: true });
+      console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q);
+
+      ch.consume(q, function (msg: any) {
+          console.log(" [x] Received");
+          
+          const body = JSON.parse(msg.content.toString());
+          console.log(body);
+          OrdersController.SubscribeEvents(body);
+          ch.ack(msg);
+      }, { noAck: false });
+  });
+});
