@@ -3,11 +3,14 @@ import dotenv from "dotenv";
 import App from "./express-app";
 import { PORT } from "./config";
 import dbConnection from "./database/dbConnection";
+// import { CreateChannel } from "./utils";
 
 dotenv.config();
 
 const StartServer = async () => {
   const app = express();
+
+  // const channel = CreateChannel()
 
   dbConnection()
     .then(() => {

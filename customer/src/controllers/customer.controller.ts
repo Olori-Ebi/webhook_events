@@ -1,6 +1,7 @@
 import { Request, response, Response } from "express";
 import { Address } from "../database/model/Address";
 import Customer from "../database/model/Customer";
+import rabbit from "../database/rabbit";
 import { comparePassword, generateToken, hashedPassword } from "../utils/auth";
 import errorResponse from "../utils/errorHandler";
 import successResponse from "../utils/response";
@@ -237,3 +238,21 @@ export default class CustomerController {
     }
   }
 }
+
+
+
+rabbit(function (conn: any) {
+  conn.createChannel(function (err:any, ch:any) {
+      let q = "PUBLISH_CUSTOMER";
+      ch.assertQueue(q, { durable: true });
+      console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q);
+
+      ch.consume(q, function (msg: any) {
+          console.log(" [x] Received");
+          
+          const body = JSON.parse(msg.content.toString());
+          CustomerController.SubscribeEvents(body);
+          ch.ack(msg);
+      }, { noAck: false });
+  });
+});

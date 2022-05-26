@@ -3,5 +3,5 @@ dotenv.config()
 
 export const MONGO_URI = process.env.MONGO_URI;
 export const APP_SECRET = '238745623hsdf'
-
+export const AMQP_URI = process.env.AMQP_URI;
 export const PORT = process.env.PORT || 8000;

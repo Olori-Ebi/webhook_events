@@ -5,10 +5,10 @@ const app = express();
 
 app.use(express.json())
 
-app.use('/customer', proxy('http://localhost:8001'))
-app.use('/order', proxy('http://localhost:8003'))
-app.use('/', proxy('http://localhost:8002'))
+app.use('/customer', proxy('http://localhost:7001'))
+app.use('/order', proxy('http://localhost:7003'))
+app.use('/', proxy('http://localhost:7002'))
 
-app.listen(8000, () => {
-    console.log('Gateway is listening to port 8000');
+app.listen(7000, () => {
+    console.log('Gateway is listening to port 7000');
 })

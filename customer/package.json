@@ -7,6 +7,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "amqplib": "^0.9.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.5",
     "dotenv": "^10.0.0",
@@ -24,6 +25,7 @@
     "dev": "nodemon --exec ts-node ./src/index "
   },
   "devDependencies": {
+    "@types/amqplib": "^0.8.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.12",

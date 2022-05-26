@@ -2,10 +2,12 @@ import { Request, response, Response } from "express";
 import { Product } from "../database/model/Product";
 import errorResponse from "../utils/errorHandler";
 import successResponse from "../utils/response";
-import { PublishCustomerEvents, PublishOrderEvents } from "../utils/index";
+// import { PublishCustomerEvents, PublishOrderEvents } from "../utils/index";
+import rabbit from '../database/rabbit'
 
 export default class ProductController {
   static async createProduct(req: Request, res: Response) {
+    // rabbit
     try {
       const { name, desc, type, unit, price, available, supplier, banner } =
         req.body;
@@ -102,7 +104,19 @@ export default class ProductController {
         { productId },
         "ADD_TO_WISHLIST"
       )) as any;
-      await PublishCustomerEvents(result);
+      // await PublishCustomerEvents(result);
+      let channel = 'PUBLISH_CUSTOMER'
+      rabbit(function (conn: any) {
+        conn.createChannel(function (err:any, ch:any) {
+            if (err) {
+                console.log(err);
+            }
+            ch.assertQueue(channel, { durable: true });
+            ch.sendToQueue(channel, Buffer.from(JSON.stringify(result)));
+            console.log('gotten');
+        });
+      });
+
       return successResponse(
         res,
         result.data.data,
@@ -130,8 +144,29 @@ export default class ProductController {
         "ADD_TO_CART"
       )) as any;
 
-      await PublishCustomerEvents(result);
-      await PublishOrderEvents(result);
+      // let channel = 'PUBLISH_CUSTOMER'
+      rabbit(function (conn: any) {
+        conn.createChannel(function (err:any, ch:any) {
+            if (err) {
+                console.log(err);
+            }
+            ch.assertQueue('PUBLISH_CUSTOMER', { durable: true });
+            ch.sendToQueue('PUBLISH_CUSTOMER', Buffer.from(JSON.stringify(result)));
+        });
+    });
+
+    // let channel = 'PUBLISH_ORDER'
+    rabbit(function (conn: any) {
+      conn.createChannel(function (err:any, ch:any) {
+          if (err) {
+              console.log(err);
+          }
+          ch.assertQueue('PUBLISH_ORDER', { durable: true });
+          ch.sendToQueue('PUBLISH_ORDER', Buffer.from(JSON.stringify(result)));
+      });
+  });
+      // await PublishCustomerEvents(result);
+      // await PublishOrderEvents(result);
 
       const response = {
         product: result.data.product,
@@ -166,3 +201,20 @@ export default class ProductController {
     }
   }
 }
+
+
+
+
+// rabbit(function(conn) {
+//   conn.createChannel(function(err, ch) {
+//       ch.assertQueue(communicationNotificationQueue, {durable: true});
+//       ch.consume(communicationNotificationQueue, function(msg) {
+//           const lang = msg.properties.headers.language || 'en';
+//           setLang(lang);
+//           const body = JSON.parse(msg.content.toString());
+//           tripLogic.sendCommunicationNotification(body);
+//           ch.ack(msg);
+//           console.log("Communication queue connected");
+//       }, {noAck: false});
+//   });
+// });
